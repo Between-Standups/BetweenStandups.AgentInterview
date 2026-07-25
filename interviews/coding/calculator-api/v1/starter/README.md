@@ -1,3 +1,3 @@
 # Calculator API Starter
 
-The V1 starter project will live here.
+Implement `POST /calculate` in this ASP.NET Core project.

@@ -20,7 +20,7 @@
     "workspace": "starter"
   },
   "grading": {
-    "command": "dotnet run --project grader/AgentInterview.Grader.csproj --no-restore --",
+    "command": "dotnet run --project grader/AgentInterview.Grader.csproj --",
     "passThreshold": 100,
     "maximumScore": 100
   },

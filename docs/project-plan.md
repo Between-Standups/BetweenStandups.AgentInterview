@@ -166,7 +166,8 @@ Status as of current development:
 - Milestone 1: Complete.
 - Milestone 2: Complete.
 - Milestone 3: Complete.
-- Milestones 4-6: Not started.
+- Milestone 4: Complete.
+- Milestones 5-6: Not started.
 
 ### Milestone 0: Repository Scaffold
 

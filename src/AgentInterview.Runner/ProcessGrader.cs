@@ -25,7 +25,7 @@ public sealed class ProcessGrader : IGrader
 
         using var process = new Process
         {
-            StartInfo = CreateStartInfo(tokens, request.Package.PackageDirectory)
+            StartInfo = CreateStartInfo(tokens, request)
         };
 
         process.Start();
@@ -80,15 +80,18 @@ public sealed class ProcessGrader : IGrader
         return ParseOutput(stdout, stderr, request.Package.Manifest.Grading.MaximumScore);
     }
 
-    private static ProcessStartInfo CreateStartInfo(IReadOnlyList<string> tokens, string workingDirectory)
+    private static ProcessStartInfo CreateStartInfo(IReadOnlyList<string> tokens, GraderRunRequest request)
     {
         var startInfo = new ProcessStartInfo
         {
             FileName = tokens[0],
-            WorkingDirectory = workingDirectory,
+            WorkingDirectory = request.Package.PackageDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
+
+        startInfo.Environment["AGENT_INTERVIEW_WORKSPACE"] = request.Workspace.CandidateWorkspaceDirectory;
+        startInfo.Environment["AGENT_INTERVIEW_PACKAGE"] = request.Package.PackageDirectory;
 
         foreach (var argument in tokens.Skip(1))
         {

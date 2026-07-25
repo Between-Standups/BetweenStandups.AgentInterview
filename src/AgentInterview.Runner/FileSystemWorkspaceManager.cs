@@ -4,6 +4,13 @@ namespace AgentInterview.Runner;
 
 public sealed class FileSystemWorkspaceManager : IWorkspaceManager
 {
+    private static readonly HashSet<string> ExcludedDirectoryNames = new(StringComparer.Ordinal)
+    {
+        "bin",
+        "obj",
+        "TestResults"
+    };
+
     private readonly string _workspaceRoot;
 
     public FileSystemWorkspaceManager(string? workspaceRoot = null)
@@ -28,14 +35,14 @@ public sealed class FileSystemWorkspaceManager : IWorkspaceManager
 
     private static void CopyDirectory(string sourceDirectory, string destinationDirectory, CancellationToken cancellationToken)
     {
-        foreach (var directory in Directory.EnumerateDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
+        foreach (var directory in Directory.EnumerateDirectories(sourceDirectory, "*", SearchOption.AllDirectories).Where(directory => !HasExcludedDirectory(sourceDirectory, directory)))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var relativePath = Path.GetRelativePath(sourceDirectory, directory);
             Directory.CreateDirectory(Path.Combine(destinationDirectory, relativePath));
         }
 
-        foreach (var file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories).Where(file => !HasExcludedDirectory(sourceDirectory, file)))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var relativePath = Path.GetRelativePath(sourceDirectory, file);
@@ -43,5 +50,12 @@ public sealed class FileSystemWorkspaceManager : IWorkspaceManager
             Directory.CreateDirectory(Path.GetDirectoryName(destination) ?? destinationDirectory);
             File.Copy(file, destination, overwrite: false);
         }
+    }
+
+    private static bool HasExcludedDirectory(string rootDirectory, string path)
+    {
+        var relativePath = Path.GetRelativePath(rootDirectory, path);
+        var parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return parts.Any(part => ExcludedDirectoryNames.Contains(part));
     }
 }

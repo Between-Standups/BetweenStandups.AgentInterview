@@ -25,7 +25,7 @@ dotnet run --project src/AgentInterview.Cli -- validate --interview coding.calcu
 dotnet run --project src/AgentInterview.Cli -- run --interview coding.calculator-api@1.0.0 --candidate configs/example-agent.json --output reports/run-001
 ```
 
-The sample grader currently emits a deterministic failing result until the full calculator API interview is built in Milestone 4.
+The sample starter is intentionally incomplete, so the sample grader returns a deterministic failing result until a candidate implements the calculator API.
 
 ## Planning
 
