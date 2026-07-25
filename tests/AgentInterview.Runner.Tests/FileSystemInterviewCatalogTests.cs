@@ -5,17 +5,31 @@ namespace AgentInterview.Runner.Tests;
 
 public sealed class FileSystemInterviewCatalogTests
 {
+    private static readonly string[] ExpectedInterviewIds =
+    [
+        "architecture.event-ingestion-design",
+        "architecture.plugin-permission-model",
+        "coding.calculator-api",
+        "coding.markdown-table-parser",
+        "coding.rate-limiter",
+        "coding.todo-api",
+        "requirements.expense-approval-workflow",
+        "requirements.incident-response-runbook",
+        "testing.order-discount-rules",
+        "testing.retry-policy"
+    ];
+
     [Fact]
-    public async Task ListAsyncDiscoversSeedCalculatorInterview()
+    public async Task ListAsyncDiscoversTenSeedInterviews()
     {
         var repositoryRoot = FindRepositoryRoot();
         var catalog = new FileSystemInterviewCatalog(repositoryRoot);
 
         var interviews = await catalog.ListAsync(CancellationToken.None);
 
-        var interview = Assert.Single(interviews);
-        Assert.Equal("coding.calculator-api", interview.Id);
-        Assert.Equal("1.0.0", interview.Version);
+        Assert.Equal(10, interviews.Count);
+        Assert.Equal(ExpectedInterviewIds, interviews.Select(interview => interview.Id).Order(StringComparer.Ordinal).ToArray());
+        Assert.All(interviews, interview => Assert.Equal("1.0.0", interview.Version));
     }
 
     [Fact]

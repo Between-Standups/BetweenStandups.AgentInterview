@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "id": "coding.markdown-table-parser",
+  "version": "1.0.0",
+  "title": "Implement a Markdown Table Parser",
+  "category": "coding",
+  "difficulty": "mid",
+  "runtime": {
+    "language": "csharp",
+    "framework": "net10.0"
+  },
+  "limits": {
+    "timeoutSeconds": 900,
+    "maxInputTokens": 20000,
+    "maxOutputTokens": 12000,
+    "maxToolCalls": 80
+  },
+  "candidate": {
+    "instructions": "prompt.md",
+    "workspace": "starter"
+  },
+  "grading": {
+    "command": "dotnet run --project grader/AgentInterview.Grader.csproj --",
+    "passThreshold": 100,
+    "maximumScore": 100
+  },
+  "networkAccess": false
+}

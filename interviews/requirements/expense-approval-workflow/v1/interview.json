@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "id": "requirements.expense-approval-workflow",
+  "version": "1.0.0",
+  "title": "Gather Requirements for Expense Approval",
+  "category": "requirements",
+  "difficulty": "mid",
+  "runtime": {
+    "language": "markdown",
+    "framework": "n/a"
+  },
+  "limits": {
+    "timeoutSeconds": 900,
+    "maxInputTokens": 25000,
+    "maxOutputTokens": 16000,
+    "maxToolCalls": 80
+  },
+  "candidate": {
+    "instructions": "prompt.md",
+    "workspace": "starter"
+  },
+  "grading": {
+    "command": "dotnet run --project grader/AgentInterview.Grader.csproj --",
+    "passThreshold": 100,
+    "maximumScore": 100
+  },
+  "networkAccess": false
+}

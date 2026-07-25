@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "id": "coding.todo-api",
+  "version": "1.0.0",
+  "title": "Implement a Todo API",
+  "category": "coding",
+  "difficulty": "mid",
+  "runtime": {
+    "language": "csharp",
+    "framework": "net10.0"
+  },
+  "limits": {
+    "timeoutSeconds": 900,
+    "maxInputTokens": 25000,
+    "maxOutputTokens": 15000,
+    "maxToolCalls": 100
+  },
+  "candidate": {
+    "instructions": "prompt.md",
+    "workspace": "starter"
+  },
+  "grading": {
+    "command": "dotnet run --project grader/AgentInterview.Grader.csproj --",
+    "passThreshold": 100,
+    "maximumScore": 100
+  },
+  "networkAccess": false
+}

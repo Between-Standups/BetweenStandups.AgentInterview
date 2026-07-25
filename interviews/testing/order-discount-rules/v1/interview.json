@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "id": "testing.order-discount-rules",
+  "version": "1.0.0",
+  "title": "Write Tests for Order Discount Rules",
+  "category": "testing",
+  "difficulty": "mid",
+  "runtime": {
+    "language": "csharp",
+    "framework": "net10.0"
+  },
+  "limits": {
+    "timeoutSeconds": 900,
+    "maxInputTokens": 22000,
+    "maxOutputTokens": 12000,
+    "maxToolCalls": 90
+  },
+  "candidate": {
+    "instructions": "prompt.md",
+    "workspace": "starter"
+  },
+  "grading": {
+    "command": "dotnet run --project grader/AgentInterview.Grader.csproj --",
+    "passThreshold": 100,
+    "maximumScore": 100
+  },
+  "networkAccess": false
+}

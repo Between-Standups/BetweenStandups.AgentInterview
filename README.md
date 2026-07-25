@@ -37,6 +37,19 @@ The sample starter is intentionally incomplete, so the sample grader returns a d
 - `AgentInterview.Cli` provides the local command surface.
 - `interviews/` contains immutable interview packages. Each version owns its prompt, starter project, fixtures, expected artifacts, and grader.
 
+## Interview Catalog
+
+- `architecture.event-ingestion-design@1.0.0`
+- `architecture.plugin-permission-model@1.0.0`
+- `coding.calculator-api@1.0.0`
+- `coding.markdown-table-parser@1.0.0`
+- `coding.rate-limiter@1.0.0`
+- `coding.todo-api@1.0.0`
+- `requirements.expense-approval-workflow@1.0.0`
+- `requirements.incident-response-runbook@1.0.0`
+- `testing.order-discount-rules@1.0.0`
+- `testing.retry-policy@1.0.0`
+
 ## Extension Points
 
 - Add interview packages under `interviews/<category>/<name>/v<version>/`.
