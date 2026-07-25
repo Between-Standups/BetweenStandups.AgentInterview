@@ -62,8 +62,14 @@ public sealed class FileSystemInterviewCatalog : IInterviewCatalog
 
     private static async Task<InterviewPackage> LoadPackageAsync(string manifestPath, CancellationToken cancellationToken)
     {
-        await using var stream = File.OpenRead(manifestPath);
-        var manifest = await JsonSerializer.DeserializeAsync<InterviewManifest>(stream, SerializerOptions, cancellationToken).ConfigureAwait(false);
+        var json = await File.ReadAllTextAsync(manifestPath, cancellationToken).ConfigureAwait(false);
+        var schemaValidation = ManifestSchemaValidator.ValidateJson(json);
+        if (!schemaValidation.IsValid)
+        {
+            throw new InvalidOperationException($"Manifest '{manifestPath}' does not match the V1 schema: {string.Join(" ", schemaValidation.Errors)}");
+        }
+
+        var manifest = JsonSerializer.Deserialize<InterviewManifest>(json, SerializerOptions);
         if (manifest is null)
         {
             throw new InvalidOperationException($"Manifest '{manifestPath}' could not be read.");

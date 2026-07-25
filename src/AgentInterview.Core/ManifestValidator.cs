@@ -65,6 +65,7 @@ public static class ManifestValidator
 
         ValidateRelativeFile(packageDirectory, manifest.Candidate.Instructions, "candidate.instructions", errors);
         ValidateRelativeDirectory(packageDirectory, manifest.Candidate.Workspace, "candidate.workspace", errors);
+        ValidateGradingCommand(packageDirectory, manifest.Grading.Command, errors);
 
         return errors.Count == 0 ? ValidationResult.Success : new ValidationResult(errors);
     }
@@ -127,6 +128,24 @@ public static class ManifestValidator
         {
             errors.Add($"{propertyName} points to a missing directory: {relativePath}.");
         }
+    }
+
+    private static void ValidateGradingCommand(string packageDirectory, string command, List<string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            return;
+        }
+
+        var tokens = command.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var projectPath = tokens.FirstOrDefault(token => token.EndsWith(".csproj", StringComparison.Ordinal));
+        if (projectPath is null)
+        {
+            errors.Add("grading.command must reference a local grader project path.");
+            return;
+        }
+
+        ValidateRelativeFile(packageDirectory, projectPath, "grading.command project", errors);
     }
 
     private static bool IsInsidePackage(string packageDirectory, string fullPath)

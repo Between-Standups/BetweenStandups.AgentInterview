@@ -11,6 +11,8 @@ public sealed class ManifestValidatorTests : IDisposable
         Directory.CreateDirectory(_packageDirectory);
         File.WriteAllText(Path.Combine(_packageDirectory, "prompt.md"), "Prompt");
         Directory.CreateDirectory(Path.Combine(_packageDirectory, "starter"));
+        Directory.CreateDirectory(Path.Combine(_packageDirectory, "grader"));
+        File.WriteAllText(Path.Combine(_packageDirectory, "grader", "AgentInterview.Grader.csproj"), "<Project />");
     }
 
     [Fact]
@@ -46,6 +48,34 @@ public sealed class ManifestValidatorTests : IDisposable
         var result = ManifestValidator.Validate(manifest, _packageDirectory);
 
         Assert.Contains("candidate.instructions must stay inside the interview package.", result.Errors);
+    }
+
+    [Fact]
+    public void ValidateRejectsMissingGraderProject()
+    {
+        File.Delete(Path.Combine(_packageDirectory, "grader", "AgentInterview.Grader.csproj"));
+
+        var result = ManifestValidator.Validate(CreateValidManifest(), _packageDirectory);
+
+        Assert.Contains("grading.command project points to a missing file: grader/AgentInterview.Grader.csproj.", result.Errors);
+    }
+
+    [Fact]
+    public void ValidateRejectsCommandWithoutProjectPath()
+    {
+        var manifest = CreateValidManifest() with
+        {
+            Grading = new GradingSpec
+            {
+                Command = "dotnet test",
+                PassThreshold = 100,
+                MaximumScore = 100
+            }
+        };
+
+        var result = ManifestValidator.Validate(manifest, _packageDirectory);
+
+        Assert.Contains("grading.command must reference a local grader project path.", result.Errors);
     }
 
     public void Dispose()

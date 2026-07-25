@@ -160,6 +160,12 @@ Hidden grading:
 
 ## Milestones
 
+Status as of current development:
+
+- Milestone 0: Complete.
+- Milestone 1: Complete.
+- Milestones 2-6: Not started.
+
 ### Milestone 0: Repository Scaffold
 
 Deliverables:
