@@ -1,0 +1,258 @@
+AgentInterview — Codex Handoff
+
+Create a new repository named AgentInterview.
+
+Objective
+
+Build a self-contained, deterministic evaluation framework for comparing AI models, prompts, agent configurations, and multi-agent workflows.
+
+Each evaluation must resemble a standardized engineering interview. Every run must receive the same immutable project, instructions, fixtures, and graders.
+
+Do not evaluate against an existing or living application.
+
+Core Requirements
+
+Each interview must be an isolated package containing:
+
+* a versioned manifest
+* candidate-visible instructions
+* a complete starter project
+* local dependencies
+* visible tests when appropriate
+* hidden deterministic graders
+* expected artifacts
+* resource limits
+* scoring rules
+
+A run must follow this lifecycle:
+
+1. Load an interview package.
+2. Create a clean temporary workspace.
+3. Copy the starter project.
+4. Execute the selected agent configuration.
+5. Capture model and agent traces.
+6. Run deterministic graders.
+7. Calculate scores.
+8. persist a machine-readable result.
+9. Generate a human-readable report.
+
+Determinism Rules
+
+* No dependency on company source code.
+* No dependency on mutable external services.
+* No internet access during an interview.
+* Pin all package and runtime versions.
+* Freeze clocks and random seeds when relevant.
+* Run each attempt in a clean environment.
+* Do not use an LLM as the authoritative grader.
+* Correctness must be determined by tests, schemas, snapshots, static analysis, performance thresholds, or exact comparisons.
+* Interview definitions must be immutable once published. Changes require a new version.
+
+Initial Repository Structure
+
+AgentInterview/
+├── interviews/
+│   └── coding/
+│       └── calculator-api/
+│           └── v1/
+│               ├── interview.json
+│               ├── prompt.md
+│               ├── starter/
+│               ├── grader/
+│               ├── expected/
+│               └── fixtures/
+├── src/
+│   ├── AgentInterview.Cli/
+│   ├── AgentInterview.Core/
+│   ├── AgentInterview.Runner/
+│   └── AgentInterview.Reporting/
+├── tests/
+├── schemas/
+├── reports/
+├── docs/
+├── Directory.Build.props
+├── AgentInterview.sln
+└── README.md
+
+Interview Manifest
+
+Define and validate a manifest similar to:
+
+{
+  "schemaVersion": "1.0",
+  "id": "coding.calculator-api",
+  "version": "1.0.0",
+  "title": "Implement a Calculator API",
+  "category": "coding",
+  "difficulty": "mid",
+  "runtime": {
+    "language": "csharp",
+    "framework": "net10.0"
+  },
+  "limits": {
+    "timeoutSeconds": 900,
+    "maxInputTokens": 25000,
+    "maxOutputTokens": 15000,
+    "maxToolCalls": 100
+  },
+  "candidate": {
+    "instructions": "prompt.md",
+    "workspace": "starter"
+  },
+  "grading": {
+    "command": "dotnet test grader/AgentInterview.Grader.csproj",
+    "passThreshold": 100,
+    "maximumScore": 100
+  },
+  "networkAccess": false
+}
+
+Create a JSON Schema for this manifest.
+
+Result Schema
+
+Every run must produce a consistent result:
+
+{
+  "runId": "uuid",
+  "interview": {
+    "id": "coding.calculator-api",
+    "version": "1.0.0"
+  },
+  "candidate": {
+    "provider": "provider-name",
+    "model": "model-name",
+    "agentConfiguration": "configuration-name",
+    "promptVersion": "1.0.0"
+  },
+  "outcome": {
+    "status": "passed",
+    "score": 100,
+    "maximumScore": 100,
+    "graderResults": []
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cachedInputTokens": 0,
+    "estimatedCostUsd": 0
+  },
+  "execution": {
+    "latencyMs": 0,
+    "retries": 0,
+    "toolCalls": 0
+  },
+  "reproducibility": {
+    "interviewHash": "",
+    "starterHash": "",
+    "graderHash": "",
+    "runnerVersion": "",
+    "environmentImage": ""
+  },
+  "trace": [],
+  "startedAt": "",
+  "completedAt": ""
+}
+
+Create a JSON Schema for this result.
+
+V1 Scope
+
+Implement:
+
+1. A .NET command-line runner.
+2. Manifest discovery and validation.
+3. Clean temporary workspace creation.
+4. Interview integrity hashing.
+5. Configurable candidate adapter interfaces.
+6. Deterministic grader execution.
+7. Timeout and process isolation.
+8. JSON result output.
+9. CSV summary output.
+10. A comparison report showing:
+
+* pass rate
+* average score
+* total tokens
+* cost per passing interview
+* latency
+* retries
+* tool calls
+* determinism across repeated runs
+
+11. One complete sample interview.
+12. Unit and integration tests for the runner.
+
+Sample Interview
+
+Create a small, fully local ASP.NET Core calculator API project.
+
+The candidate must implement specified endpoints and validation behavior. Grade it using hidden integration tests.
+
+Include edge cases such as:
+
+* division by zero
+* malformed requests
+* overflow behavior
+* consistent HTTP status codes
+* deterministic response JSON
+
+The sample interview must execute without internet access after dependencies have been restored.
+
+Architecture Expectations
+
+Use clear interfaces for:
+
+* IInterviewCatalog
+* IWorkspaceManager
+* ICandidateAdapter
+* IInterviewRunner
+* IGrader
+* IUsageCalculator
+* IResultStore
+* IReportGenerator
+
+Do not tightly couple the runner to a particular model provider.
+
+Quality Requirements
+
+* Nullable reference types enabled.
+* Warnings treated as errors.
+* Explicit error handling.
+* Structured logging.
+* Cancellation-token support.
+* Deterministic tests.
+* No placeholder implementation in the completed V1.
+* README with setup, architecture, commands, and extension instructions.
+
+Suggested CLI
+
+agent-interview list
+agent-interview validate \
+  --interview coding.calculator-api@1.0.0
+agent-interview run \
+  --interview coding.calculator-api@1.0.0 \
+  --candidate configs/example-agent.json \
+  --repetitions 3 \
+  --output reports/run-001
+agent-interview compare \
+  --results reports \
+  --output reports/comparison
+
+Implementation Sequence
+
+Start by:
+
+1. scaffolding the solution and projects
+2. defining the domain model
+3. creating both JSON schemas
+4. implementing manifest validation
+5. implementing the workspace and grader pipeline
+6. creating the sample interview
+7. adding result persistence and reporting
+8. writing end-to-end tests
+9. documenting the system
+
+Make reasonable engineering decisions where details are missing. Record consequential decisions in docs/decisions as ADRs.
+
+Before finishing, run the full test suite and include the commands used and results in the final summary.
