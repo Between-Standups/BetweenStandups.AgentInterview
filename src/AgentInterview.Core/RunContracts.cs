@@ -5,7 +5,8 @@ public sealed record RunWorkspace(string RootDirectory, string CandidateWorkspac
 public sealed record CandidateRunRequest(
     InterviewPackage Package,
     RunWorkspace Workspace,
-    string CandidateConfigurationPath);
+    string CandidateConfigurationPath,
+    CandidateConfiguration CandidateConfiguration);
 
 public sealed record CandidateRunResult(
     bool Succeeded,
@@ -35,9 +36,11 @@ public sealed record InterviewRunRequest(
 public sealed record InterviewRunResult(
     Guid RunId,
     InterviewRef Interview,
+    CandidateConfiguration Candidate,
     string Status,
     int Score,
     int MaximumScore,
+    IReadOnlyList<GraderCaseResult> GraderResults,
     UsageSummary Usage,
     ExecutionSummary Execution,
     ReproducibilitySummary Reproducibility,
@@ -63,3 +66,10 @@ public sealed record ReproducibilitySummary(
 public sealed record TraceEvent(DateTimeOffset Timestamp, string Source, string Message);
 
 public sealed record ReportRequest(string ResultsDirectory, string OutputDirectory);
+
+public sealed record CandidateConfiguration(
+    string Provider,
+    string Model,
+    string AgentConfiguration,
+    string PromptVersion,
+    string Adapter);

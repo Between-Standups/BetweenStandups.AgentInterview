@@ -1,0 +1,7 @@
+{
+  "provider": "local",
+  "model": "noop",
+  "agentConfiguration": "example-noop",
+  "promptVersion": "1.0.0",
+  "adapter": "noop"
+}

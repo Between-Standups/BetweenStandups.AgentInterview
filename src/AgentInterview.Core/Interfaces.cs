@@ -32,6 +32,11 @@ public interface IUsageCalculator
     UsageSummary Calculate(CandidateRunResult candidateResult);
 }
 
+public interface IContentHasher
+{
+    Task<string> HashDirectoryAsync(string directory, CancellationToken cancellationToken);
+}
+
 public interface IResultStore
 {
     Task SaveAsync(InterviewRunResult result, CancellationToken cancellationToken);

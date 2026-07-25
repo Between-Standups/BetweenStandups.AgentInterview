@@ -22,6 +22,7 @@ dotnet build
 dotnet test
 dotnet run --project src/AgentInterview.Cli -- list
 dotnet run --project src/AgentInterview.Cli -- validate --interview coding.calculator-api@1.0.0
+dotnet run --project src/AgentInterview.Cli -- run --interview coding.calculator-api@1.0.0 --candidate configs/example-agent.json --output reports/run-001
 ```
 
 ## Planning

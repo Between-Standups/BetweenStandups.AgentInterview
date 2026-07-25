@@ -28,6 +28,50 @@ public sealed class CliSmokeTests
         Assert.True(string.IsNullOrWhiteSpace(error), error);
     }
 
+    [Fact]
+    public async Task RunCommandWritesResultJson()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var cliAssemblyPath = Path.Combine(repositoryRoot, "src", "AgentInterview.Cli", "bin", "Debug", "net10.0", "AgentInterview.Cli.dll");
+        var outputDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                WorkingDirectory = repositoryRoot,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }.WithArguments(
+                cliAssemblyPath,
+                "run",
+                "--interview",
+                "coding.calculator-api@1.0.0",
+                "--candidate",
+                "configs/example-agent.json",
+                "--output",
+                outputDirectory));
+
+            Assert.NotNull(process);
+            var output = await process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+            var error = await process.StandardError.ReadToEndAsync(CancellationToken.None);
+            await process.WaitForExitAsync(CancellationToken.None);
+
+            Assert.Equal(0, process.ExitCode);
+            Assert.Contains("completed with status 'ungraded'", output);
+            Assert.True(string.IsNullOrWhiteSpace(error), error);
+            Assert.Single(Directory.EnumerateFiles(outputDirectory, "*.json"));
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+            {
+                Directory.Delete(outputDirectory, recursive: true);
+            }
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -21,6 +21,7 @@ internal static class AgentInterviewCli
             {
                 "list" => await ListAsync(catalog, cancellationToken).ConfigureAwait(false),
                 "validate" => await ValidateAsync(catalog, args, cancellationToken).ConfigureAwait(false),
+                "run" => await RunAsync(catalog, repositoryRoot, args, cancellationToken).ConfigureAwait(false),
                 _ => UnknownCommand(args[0])
             };
         }
@@ -81,6 +82,58 @@ internal static class AgentInterviewCli
         return 1;
     }
 
+    private static async Task<int> RunAsync(
+        IInterviewCatalog catalog,
+        string repositoryRoot,
+        string[] args,
+        CancellationToken cancellationToken)
+    {
+        var interviewValue = ReadOption(args, "--interview");
+        var candidateConfigurationPath = ReadOption(args, "--candidate");
+        var outputDirectory = ReadOption(args, "--output");
+
+        if (interviewValue is null)
+        {
+            Console.Error.WriteLine("Missing required option: --interview");
+            return 1;
+        }
+
+        if (candidateConfigurationPath is null)
+        {
+            Console.Error.WriteLine("Missing required option: --candidate");
+            return 1;
+        }
+
+        if (outputDirectory is null)
+        {
+            Console.Error.WriteLine("Missing required option: --output");
+            return 1;
+        }
+
+        if (!InterviewRef.TryParse(interviewValue, out var interviewRef) || interviewRef is null)
+        {
+            Console.Error.WriteLine("Invalid interview reference. Expected format: id@version");
+            return 1;
+        }
+
+        var runner = new InterviewRunner(
+            catalog,
+            new FileSystemWorkspaceManager(),
+            new NoOpCandidateAdapter(),
+            new DirectoryContentHasher());
+
+        var result = await runner.RunAsync(
+            new InterviewRunRequest(
+                interviewRef,
+                Path.GetFullPath(Path.Combine(repositoryRoot, candidateConfigurationPath)),
+                Path.GetFullPath(Path.Combine(repositoryRoot, outputDirectory))),
+            cancellationToken).ConfigureAwait(false);
+
+        Console.WriteLine($"Run {result.RunId:N} completed with status '{result.Status}'.");
+        Console.WriteLine($"Result: {Path.Combine(outputDirectory, $"{result.RunId:N}.json")}");
+        return 0;
+    }
+
     private static string? ReadOption(string[] args, string optionName)
     {
         for (var index = 1; index < args.Length - 1; index++)
@@ -113,5 +166,6 @@ internal static class AgentInterviewCli
         Console.WriteLine("Commands:");
         Console.WriteLine("  agent-interview list");
         Console.WriteLine("  agent-interview validate --interview <id@version>");
+        Console.WriteLine("  agent-interview run --interview <id@version> --candidate <config.json> --output <directory>");
     }
 }
