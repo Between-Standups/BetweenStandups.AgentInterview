@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://betweenstandups.dev/agent-interview/interview-manifest.schema.json",
+  "title": "AgentInterview Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "title",
+    "category",
+    "difficulty",
+    "runtime",
+    "limits",
+    "candidate",
+    "grading",
+    "networkAccess"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "difficulty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "framework"
+      ],
+      "properties": {
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "framework": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeoutSeconds",
+        "maxInputTokens",
+        "maxOutputTokens",
+        "maxToolCalls"
+      ],
+      "properties": {
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxInputTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxOutputTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxToolCalls": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instructions",
+        "workspace"
+      ],
+      "properties": {
+        "instructions": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workspace": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "grading": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "passThreshold",
+        "maximumScore"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "passThreshold": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximumScore": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "networkAccess": {
+      "const": false
+    }
+  }
+}

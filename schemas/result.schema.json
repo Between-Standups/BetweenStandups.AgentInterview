@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://betweenstandups.dev/agent-interview/result.schema.json",
+  "title": "AgentInterview Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "interview",
+    "candidate",
+    "outcome",
+    "usage",
+    "execution",
+    "reproducibility",
+    "trace",
+    "startedAt",
+    "completedAt"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "interview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model",
+        "agentConfiguration",
+        "promptVersion"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "agentConfiguration": {
+          "type": "string"
+        },
+        "promptVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "score",
+        "maximumScore",
+        "graderResults"
+      ],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximumScore": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "graderResults": {
+          "type": "array"
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputTokens",
+        "outputTokens",
+        "cachedInputTokens",
+        "estimatedCostUsd"
+      ],
+      "properties": {
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cachedInputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "estimatedCostUsd": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "latencyMs",
+        "retries",
+        "toolCalls"
+      ],
+      "properties": {
+        "latencyMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "toolCalls": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interviewHash",
+        "starterHash",
+        "graderHash",
+        "runnerVersion",
+        "environmentImage"
+      ],
+      "properties": {
+        "interviewHash": {
+          "type": "string"
+        },
+        "starterHash": {
+          "type": "string"
+        },
+        "graderHash": {
+          "type": "string"
+        },
+        "runnerVersion": {
+          "type": "string"
+        },
+        "environmentImage": {
+          "type": "string"
+        }
+      }
+    },
+    "trace": {
+      "type": "array"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
