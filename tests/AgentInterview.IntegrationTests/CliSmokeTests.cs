@@ -62,6 +62,7 @@ public sealed class CliSmokeTests
             Assert.Contains("completed with status 'failed'", output);
             Assert.True(string.IsNullOrWhiteSpace(error), error);
             Assert.Single(Directory.EnumerateFiles(outputDirectory, "*.json"));
+            Assert.True(File.Exists(Path.Combine(outputDirectory, "run.log.jsonl")));
         }
         finally
         {
@@ -96,6 +97,7 @@ public sealed class CliSmokeTests
                 "--output",
                 resultsDirectory);
             Assert.Equal(3, Directory.EnumerateFiles(resultsDirectory, "*.json").Count());
+            Assert.True(File.Exists(Path.Combine(resultsDirectory, "run.log.jsonl")));
 
             await RunProcessAsync(
                 repositoryRoot,

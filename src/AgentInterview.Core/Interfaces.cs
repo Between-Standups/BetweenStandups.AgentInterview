@@ -22,6 +22,11 @@ public interface IInterviewRunner
     Task<InterviewRunResult> RunAsync(InterviewRunRequest request, CancellationToken cancellationToken);
 }
 
+public interface IRunLogger
+{
+    Task LogAsync(string level, string eventName, IReadOnlyDictionary<string, string> properties, CancellationToken cancellationToken);
+}
+
 public interface IGrader
 {
     Task<GraderRunResult> GradeAsync(GraderRunRequest request, CancellationToken cancellationToken);

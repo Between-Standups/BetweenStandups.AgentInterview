@@ -6,14 +6,15 @@ The idea is to interview an AI setup with standardized engineering tasks: every 
 
 ## Current Status
 
-This repository is in early V1 development. The first scaffold includes:
+V1 foundation milestones are complete:
 
 - .NET 10 solution structure.
 - Core manifest and runner contracts.
 - Manifest validation.
-- CLI `list` and `validate` commands.
+- CLI `list`, `validate`, `run`, and `compare` commands.
 - JSON schemas for interview manifests and run results.
-- A seed `coding.calculator-api@1.0.0` interview package.
+- A complete local `coding.calculator-api@1.0.0` starter and deterministic grader.
+- JSON result output, JSONL run logs, CSV summaries, and Markdown comparison reports.
 
 ## Commands
 
@@ -27,6 +28,24 @@ dotnet run --project src/AgentInterview.Cli -- compare --results reports/run-001
 ```
 
 The sample starter is intentionally incomplete, so the sample grader returns a deterministic failing result until a candidate implements the calculator API.
+
+## Architecture
+
+- `AgentInterview.Core` defines manifests, run/result contracts, and extension interfaces.
+- `AgentInterview.Runner` discovers interviews, creates clean workspaces, runs candidate adapters, executes graders, hashes package contents, writes JSON results, and emits JSONL run logs.
+- `AgentInterview.Reporting` reads result JSON files and generates CSV and Markdown comparisons.
+- `AgentInterview.Cli` provides the local command surface.
+- `interviews/` contains immutable interview packages. Each version owns its prompt, starter project, fixtures, expected artifacts, and grader.
+
+## Extension Points
+
+- Add interview packages under `interviews/<category>/<name>/v<version>/`.
+- Add candidate adapters by implementing `ICandidateAdapter`.
+- Add grader strategies by implementing `IGrader`; the default process grader expects deterministic JSON on stdout.
+- Add result destinations by implementing `IResultStore`.
+- Add report formats by implementing `IReportGenerator`.
+
+Published interview versions should be treated as immutable. Change the version when prompts, starters, fixtures, or graders change.
 
 ## Planning
 

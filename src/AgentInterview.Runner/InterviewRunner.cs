@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using AgentInterview.Core;
 
@@ -11,19 +12,22 @@ public sealed class InterviewRunner : IInterviewRunner
     private readonly ICandidateAdapter _candidateAdapter;
     private readonly IGrader _grader;
     private readonly IContentHasher _hasher;
+    private readonly IRunLogger _logger;
 
     public InterviewRunner(
         IInterviewCatalog catalog,
         IWorkspaceManager workspaceManager,
         ICandidateAdapter candidateAdapter,
         IGrader grader,
-        IContentHasher hasher)
+        IContentHasher hasher,
+        IRunLogger? logger = null)
     {
         _catalog = catalog;
         _workspaceManager = workspaceManager;
         _candidateAdapter = candidateAdapter;
         _grader = grader;
         _hasher = hasher;
+        _logger = logger ?? new NullRunLogger();
     }
 
     public async Task<InterviewRunResult> RunAsync(InterviewRunRequest request, CancellationToken cancellationToken)
@@ -32,6 +36,16 @@ public sealed class InterviewRunner : IInterviewRunner
 
         var startedAt = DateTimeOffset.UtcNow;
         var stopwatch = Stopwatch.StartNew();
+        await _logger.LogAsync(
+            "info",
+            "run.started",
+            new Dictionary<string, string>
+            {
+                ["interview"] = request.Interview.ToString(),
+                ["outputDirectory"] = request.OutputDirectory
+            },
+            cancellationToken).ConfigureAwait(false);
+
         var package = await _catalog.GetAsync(request.Interview, cancellationToken).ConfigureAwait(false);
         var manifestValidation = ManifestValidator.Validate(package.Manifest, package.PackageDirectory);
         if (!manifestValidation.IsValid)
@@ -48,9 +62,30 @@ public sealed class InterviewRunner : IInterviewRunner
         }
 
         var workspace = await _workspaceManager.CreateAsync(package, cancellationToken).ConfigureAwait(false);
+        await _logger.LogAsync(
+            "info",
+            "workspace.created",
+            new Dictionary<string, string>
+            {
+                ["rootDirectory"] = workspace.RootDirectory,
+                ["candidateWorkspaceDirectory"] = workspace.CandidateWorkspaceDirectory
+            },
+            cancellationToken).ConfigureAwait(false);
+
         var candidateResult = await _candidateAdapter.ExecuteAsync(
             new CandidateRunRequest(package, workspace, request.CandidateConfigurationPath, candidateConfiguration),
             cancellationToken).ConfigureAwait(false);
+        await _logger.LogAsync(
+            "info",
+            "candidate.completed",
+            new Dictionary<string, string>
+            {
+                ["succeeded"] = candidateResult.Succeeded.ToString(),
+                ["toolCalls"] = candidateResult.ToolCalls.ToString(CultureInfo.InvariantCulture),
+                ["retries"] = candidateResult.Retries.ToString(CultureInfo.InvariantCulture)
+            },
+            cancellationToken).ConfigureAwait(false);
+
         var graderResult = candidateResult.Succeeded
             ? await _grader.GradeAsync(new GraderRunRequest(package, workspace), cancellationToken).ConfigureAwait(false)
             : new GraderRunResult(
@@ -60,6 +95,16 @@ public sealed class InterviewRunner : IInterviewRunner
                 [new GraderCaseResult("candidate.execution", false, 0, candidateResult.ErrorMessage)],
                 string.Empty,
                 candidateResult.ErrorMessage ?? string.Empty);
+        await _logger.LogAsync(
+            "info",
+            "grader.completed",
+            new Dictionary<string, string>
+            {
+                ["passed"] = graderResult.Passed.ToString(),
+                ["score"] = graderResult.Score.ToString(CultureInfo.InvariantCulture),
+                ["maximumScore"] = graderResult.MaximumScore.ToString(CultureInfo.InvariantCulture)
+            },
+            cancellationToken).ConfigureAwait(false);
 
         stopwatch.Stop();
         var completedAt = DateTimeOffset.UtcNow;
@@ -87,6 +132,16 @@ public sealed class InterviewRunner : IInterviewRunner
             CompletedAt: completedAt);
 
         await new JsonResultStore(request.OutputDirectory).SaveAsync(result, cancellationToken).ConfigureAwait(false);
+        await _logger.LogAsync(
+            "info",
+            "result.saved",
+            new Dictionary<string, string>
+            {
+                ["runId"] = result.RunId.ToString("N"),
+                ["status"] = result.Status
+            },
+            cancellationToken).ConfigureAwait(false);
+
         return result;
     }
 }

@@ -2,7 +2,14 @@ using AgentInterview.Core;
 using AgentInterview.Reporting;
 using AgentInterview.Runner;
 
-return await AgentInterviewCli.RunAsync(args, Directory.GetCurrentDirectory(), CancellationToken.None).ConfigureAwait(false);
+using var cancellation = new CancellationTokenSource();
+Console.CancelKeyPress += (_, eventArgs) =>
+{
+    eventArgs.Cancel = true;
+    cancellation.Cancel();
+};
+
+return await AgentInterviewCli.RunAsync(args, Directory.GetCurrentDirectory(), cancellation.Token).ConfigureAwait(false);
 
 internal static class AgentInterviewCli
 {
@@ -27,9 +34,14 @@ internal static class AgentInterviewCli
                 _ => UnknownCommand(args[0])
             };
         }
+        catch (OperationCanceledException)
+        {
+            Console.Error.WriteLine("error: operation cancelled.");
+            return 130;
+        }
         catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
         {
-            Console.Error.WriteLine(exception.Message);
+            Console.Error.WriteLine($"error: {exception.Message}");
             return 1;
         }
     }
@@ -56,13 +68,13 @@ internal static class AgentInterviewCli
         var interviewValue = ReadOption(args, "--interview");
         if (interviewValue is null)
         {
-            Console.Error.WriteLine("Missing required option: --interview");
+            Console.Error.WriteLine("error: missing required option: --interview");
             return 1;
         }
 
         if (!InterviewRef.TryParse(interviewValue, out var interviewRef) || interviewRef is null)
         {
-            Console.Error.WriteLine("Invalid interview reference. Expected format: id@version");
+            Console.Error.WriteLine("error: invalid interview reference. Expected format: id@version");
             return 1;
         }
 
@@ -75,7 +87,7 @@ internal static class AgentInterviewCli
             return 0;
         }
 
-        Console.Error.WriteLine($"{interviewRef} is invalid:");
+        Console.Error.WriteLine($"error: {interviewRef} is invalid:");
         foreach (var error in validation.Errors)
         {
             Console.Error.WriteLine($"- {error}");
@@ -97,43 +109,46 @@ internal static class AgentInterviewCli
 
         if (interviewValue is null)
         {
-            Console.Error.WriteLine("Missing required option: --interview");
+            Console.Error.WriteLine("error: missing required option: --interview");
             return 1;
         }
 
         if (candidateConfigurationPath is null)
         {
-            Console.Error.WriteLine("Missing required option: --candidate");
+            Console.Error.WriteLine("error: missing required option: --candidate");
             return 1;
         }
 
         if (outputDirectory is null)
         {
-            Console.Error.WriteLine("Missing required option: --output");
+            Console.Error.WriteLine("error: missing required option: --output");
             return 1;
         }
 
         if (!InterviewRef.TryParse(interviewValue, out var interviewRef) || interviewRef is null)
         {
-            Console.Error.WriteLine("Invalid interview reference. Expected format: id@version");
+            Console.Error.WriteLine("error: invalid interview reference. Expected format: id@version");
             return 1;
         }
 
-        var runner = new InterviewRunner(
-            catalog,
-            new FileSystemWorkspaceManager(),
-            new NoOpCandidateAdapter(),
-            new ProcessGrader(),
-            new DirectoryContentHasher());
-
         var repetitions = ParseRepetitions(repetitionsValue);
+        var absoluteOutputDirectory = Path.GetFullPath(Path.Combine(repositoryRoot, outputDirectory));
         for (var attempt = 1; attempt <= repetitions; attempt++)
         {
+            var logger = new JsonLinesRunLogger(absoluteOutputDirectory);
+            var runner = new InterviewRunner(
+                catalog,
+                new FileSystemWorkspaceManager(),
+                new NoOpCandidateAdapter(),
+                new ProcessGrader(),
+                new DirectoryContentHasher(),
+                logger);
+
             var result = await runner.RunAsync(
                 new InterviewRunRequest(
                     interviewRef,
                     Path.GetFullPath(Path.Combine(repositoryRoot, candidateConfigurationPath)),
-                    Path.GetFullPath(Path.Combine(repositoryRoot, outputDirectory))),
+                    absoluteOutputDirectory),
                 cancellationToken).ConfigureAwait(false);
 
             Console.WriteLine($"Run {attempt}/{repetitions} {result.RunId:N} completed with status '{result.Status}'.");
@@ -150,13 +165,13 @@ internal static class AgentInterviewCli
 
         if (resultsDirectory is null)
         {
-            Console.Error.WriteLine("Missing required option: --results");
+            Console.Error.WriteLine("error: missing required option: --results");
             return 1;
         }
 
         if (outputDirectory is null)
         {
-            Console.Error.WriteLine("Missing required option: --output");
+            Console.Error.WriteLine("error: missing required option: --output");
             return 1;
         }
 
@@ -187,7 +202,7 @@ internal static class AgentInterviewCli
 
     private static int UnknownCommand(string command)
     {
-        Console.Error.WriteLine($"Unknown command: {command}");
+        Console.Error.WriteLine($"error: unknown command: {command}");
         WriteHelp();
         return 1;
     }
