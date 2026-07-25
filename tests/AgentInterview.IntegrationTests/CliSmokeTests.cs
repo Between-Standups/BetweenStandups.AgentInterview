@@ -59,7 +59,7 @@ public sealed class CliSmokeTests
             await process.WaitForExitAsync(CancellationToken.None);
 
             Assert.Equal(0, process.ExitCode);
-            Assert.Contains("completed with status 'ungraded'", output);
+            Assert.Contains("completed with status 'failed'", output);
             Assert.True(string.IsNullOrWhiteSpace(error), error);
             Assert.Single(Directory.EnumerateFiles(outputDirectory, "*.json"));
         }

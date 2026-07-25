@@ -14,6 +14,7 @@ public sealed class InterviewRunnerTests : IDisposable
             new FileSystemInterviewCatalog(repositoryRoot),
             new FileSystemWorkspaceManager(),
             new NoOpCandidateAdapter(),
+            new PassingGrader(),
             new DirectoryContentHasher());
 
         var result = await runner.RunAsync(
@@ -23,7 +24,7 @@ public sealed class InterviewRunnerTests : IDisposable
                 _outputDirectory),
             CancellationToken.None);
 
-        Assert.Equal("ungraded", result.Status);
+        Assert.Equal("passed", result.Status);
         Assert.Equal("local", result.Candidate.Provider);
         Assert.NotEmpty(result.Reproducibility.InterviewHash);
         Assert.True(File.Exists(Path.Combine(_outputDirectory, $"{result.RunId:N}.json")));
@@ -51,5 +52,21 @@ public sealed class InterviewRunnerTests : IDisposable
         }
 
         throw new InvalidOperationException("Could not locate repository root.");
+    }
+
+    private sealed class PassingGrader : IGrader
+    {
+        public Task<GraderRunResult> GradeAsync(GraderRunRequest request, CancellationToken cancellationToken)
+        {
+            var result = new GraderRunResult(
+                true,
+                request.Package.Manifest.Grading.MaximumScore,
+                request.Package.Manifest.Grading.MaximumScore,
+                [new GraderCaseResult("fixture.pass", true, request.Package.Manifest.Grading.MaximumScore, null)],
+                string.Empty,
+                string.Empty);
+
+            return Task.FromResult(result);
+        }
     }
 }

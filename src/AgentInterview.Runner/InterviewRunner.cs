@@ -9,17 +9,20 @@ public sealed class InterviewRunner : IInterviewRunner
     private readonly IInterviewCatalog _catalog;
     private readonly IWorkspaceManager _workspaceManager;
     private readonly ICandidateAdapter _candidateAdapter;
+    private readonly IGrader _grader;
     private readonly IContentHasher _hasher;
 
     public InterviewRunner(
         IInterviewCatalog catalog,
         IWorkspaceManager workspaceManager,
         ICandidateAdapter candidateAdapter,
+        IGrader grader,
         IContentHasher hasher)
     {
         _catalog = catalog;
         _workspaceManager = workspaceManager;
         _candidateAdapter = candidateAdapter;
+        _grader = grader;
         _hasher = hasher;
     }
 
@@ -48,6 +51,15 @@ public sealed class InterviewRunner : IInterviewRunner
         var candidateResult = await _candidateAdapter.ExecuteAsync(
             new CandidateRunRequest(package, workspace, request.CandidateConfigurationPath, candidateConfiguration),
             cancellationToken).ConfigureAwait(false);
+        var graderResult = candidateResult.Succeeded
+            ? await _grader.GradeAsync(new GraderRunRequest(package, workspace), cancellationToken).ConfigureAwait(false)
+            : new GraderRunResult(
+                false,
+                0,
+                package.Manifest.Grading.MaximumScore,
+                [new GraderCaseResult("candidate.execution", false, 0, candidateResult.ErrorMessage)],
+                string.Empty,
+                candidateResult.ErrorMessage ?? string.Empty);
 
         stopwatch.Stop();
         var completedAt = DateTimeOffset.UtcNow;
@@ -56,10 +68,12 @@ public sealed class InterviewRunner : IInterviewRunner
             RunId: Guid.NewGuid(),
             Interview: request.Interview,
             Candidate: candidateConfiguration,
-            Status: candidateResult.Succeeded ? "ungraded" : "candidate_failed",
-            Score: 0,
-            MaximumScore: package.Manifest.Grading.MaximumScore,
-            GraderResults: Array.Empty<GraderCaseResult>(),
+            Status: candidateResult.Succeeded
+                ? graderResult.Passed ? "passed" : "failed"
+                : "candidate_failed",
+            Score: graderResult.Score,
+            MaximumScore: graderResult.MaximumScore,
+            GraderResults: graderResult.Cases,
             Usage: candidateResult.Usage,
             Execution: new ExecutionSummary(stopwatch.ElapsedMilliseconds, candidateResult.Retries, candidateResult.ToolCalls),
             Reproducibility: new ReproducibilitySummary(

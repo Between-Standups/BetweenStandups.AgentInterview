@@ -120,6 +120,7 @@ internal static class AgentInterviewCli
             catalog,
             new FileSystemWorkspaceManager(),
             new NoOpCandidateAdapter(),
+            new ProcessGrader(),
             new DirectoryContentHasher());
 
         var result = await runner.RunAsync(
