@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AgentInterview.Core\AgentInterview.Core.csproj" />
+    <ProjectReference Include="..\AgentInterview.Reporting\AgentInterview.Reporting.csproj" />
     <ProjectReference Include="..\AgentInterview.Runner\AgentInterview.Runner.csproj" />
   </ItemGroup>
 

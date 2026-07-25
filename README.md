@@ -22,7 +22,8 @@ dotnet build
 dotnet test
 dotnet run --project src/AgentInterview.Cli -- list
 dotnet run --project src/AgentInterview.Cli -- validate --interview coding.calculator-api@1.0.0
-dotnet run --project src/AgentInterview.Cli -- run --interview coding.calculator-api@1.0.0 --candidate configs/example-agent.json --output reports/run-001
+dotnet run --project src/AgentInterview.Cli -- run --interview coding.calculator-api@1.0.0 --candidate configs/example-agent.json --repetitions 3 --output reports/run-001
+dotnet run --project src/AgentInterview.Cli -- compare --results reports/run-001 --output reports/comparison
 ```
 
 The sample starter is intentionally incomplete, so the sample grader returns a deterministic failing result until a candidate implements the calculator API.

@@ -1,4 +1,5 @@
 using AgentInterview.Core;
+using AgentInterview.Reporting;
 using AgentInterview.Runner;
 
 return await AgentInterviewCli.RunAsync(args, Directory.GetCurrentDirectory(), CancellationToken.None).ConfigureAwait(false);
@@ -22,6 +23,7 @@ internal static class AgentInterviewCli
                 "list" => await ListAsync(catalog, cancellationToken).ConfigureAwait(false),
                 "validate" => await ValidateAsync(catalog, args, cancellationToken).ConfigureAwait(false),
                 "run" => await RunAsync(catalog, repositoryRoot, args, cancellationToken).ConfigureAwait(false),
+                "compare" => await CompareAsync(repositoryRoot, args, cancellationToken).ConfigureAwait(false),
                 _ => UnknownCommand(args[0])
             };
         }
@@ -91,6 +93,7 @@ internal static class AgentInterviewCli
         var interviewValue = ReadOption(args, "--interview");
         var candidateConfigurationPath = ReadOption(args, "--candidate");
         var outputDirectory = ReadOption(args, "--output");
+        var repetitionsValue = ReadOption(args, "--repetitions");
 
         if (interviewValue is null)
         {
@@ -123,15 +126,49 @@ internal static class AgentInterviewCli
             new ProcessGrader(),
             new DirectoryContentHasher());
 
-        var result = await runner.RunAsync(
-            new InterviewRunRequest(
-                interviewRef,
-                Path.GetFullPath(Path.Combine(repositoryRoot, candidateConfigurationPath)),
+        var repetitions = ParseRepetitions(repetitionsValue);
+        for (var attempt = 1; attempt <= repetitions; attempt++)
+        {
+            var result = await runner.RunAsync(
+                new InterviewRunRequest(
+                    interviewRef,
+                    Path.GetFullPath(Path.Combine(repositoryRoot, candidateConfigurationPath)),
+                    Path.GetFullPath(Path.Combine(repositoryRoot, outputDirectory))),
+                cancellationToken).ConfigureAwait(false);
+
+            Console.WriteLine($"Run {attempt}/{repetitions} {result.RunId:N} completed with status '{result.Status}'.");
+            Console.WriteLine($"Result: {Path.Combine(outputDirectory, $"{result.RunId:N}.json")}");
+        }
+
+        return 0;
+    }
+
+    private static async Task<int> CompareAsync(string repositoryRoot, string[] args, CancellationToken cancellationToken)
+    {
+        var resultsDirectory = ReadOption(args, "--results");
+        var outputDirectory = ReadOption(args, "--output");
+
+        if (resultsDirectory is null)
+        {
+            Console.Error.WriteLine("Missing required option: --results");
+            return 1;
+        }
+
+        if (outputDirectory is null)
+        {
+            Console.Error.WriteLine("Missing required option: --output");
+            return 1;
+        }
+
+        var generator = new MarkdownReportGenerator();
+        await generator.GenerateAsync(
+            new ReportRequest(
+                Path.GetFullPath(Path.Combine(repositoryRoot, resultsDirectory)),
                 Path.GetFullPath(Path.Combine(repositoryRoot, outputDirectory))),
             cancellationToken).ConfigureAwait(false);
 
-        Console.WriteLine($"Run {result.RunId:N} completed with status '{result.Status}'.");
-        Console.WriteLine($"Result: {Path.Combine(outputDirectory, $"{result.RunId:N}.json")}");
+        Console.WriteLine($"Comparison: {Path.Combine(outputDirectory, "comparison.md")}");
+        Console.WriteLine($"Summary: {Path.Combine(outputDirectory, "summary.csv")}");
         return 0;
     }
 
@@ -160,6 +197,21 @@ internal static class AgentInterviewCli
         || string.Equals(value, "-h", StringComparison.Ordinal)
         || string.Equals(value, "help", StringComparison.Ordinal);
 
+    private static int ParseRepetitions(string? value)
+    {
+        if (value is null)
+        {
+            return 1;
+        }
+
+        if (!int.TryParse(value, out var repetitions) || repetitions < 1)
+        {
+            throw new ArgumentException("--repetitions must be a positive integer.");
+        }
+
+        return repetitions;
+    }
+
     private static void WriteHelp()
     {
         Console.WriteLine("AgentInterview");
@@ -167,6 +219,7 @@ internal static class AgentInterviewCli
         Console.WriteLine("Commands:");
         Console.WriteLine("  agent-interview list");
         Console.WriteLine("  agent-interview validate --interview <id@version>");
-        Console.WriteLine("  agent-interview run --interview <id@version> --candidate <config.json> --output <directory>");
+        Console.WriteLine("  agent-interview run --interview <id@version> --candidate <config.json> --repetitions <count> --output <directory>");
+        Console.WriteLine("  agent-interview compare --results <directory> --output <directory>");
     }
 }

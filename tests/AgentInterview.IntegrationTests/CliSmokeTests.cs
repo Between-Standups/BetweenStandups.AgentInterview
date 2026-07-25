@@ -72,6 +72,53 @@ public sealed class CliSmokeTests
         }
     }
 
+    [Fact]
+    public async Task RunRepetitionsAndCompareGenerateReports()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var cliAssemblyPath = Path.Combine(repositoryRoot, "src", "AgentInterview.Cli", "bin", "Debug", "net10.0", "AgentInterview.Cli.dll");
+        var outputRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var resultsDirectory = Path.Combine(outputRoot, "results");
+        var comparisonDirectory = Path.Combine(outputRoot, "comparison");
+
+        try
+        {
+            await RunProcessAsync(
+                repositoryRoot,
+                cliAssemblyPath,
+                "run",
+                "--interview",
+                "coding.calculator-api@1.0.0",
+                "--candidate",
+                "configs/example-agent.json",
+                "--repetitions",
+                "3",
+                "--output",
+                resultsDirectory);
+            Assert.Equal(3, Directory.EnumerateFiles(resultsDirectory, "*.json").Count());
+
+            await RunProcessAsync(
+                repositoryRoot,
+                cliAssemblyPath,
+                "compare",
+                "--results",
+                resultsDirectory,
+                "--output",
+                comparisonDirectory);
+
+            Assert.True(File.Exists(Path.Combine(comparisonDirectory, "summary.csv")));
+            Assert.True(File.Exists(Path.Combine(comparisonDirectory, "comparison.md")));
+            Assert.Contains("stable", await File.ReadAllTextAsync(Path.Combine(comparisonDirectory, "summary.csv")));
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -86,6 +133,24 @@ public sealed class CliSmokeTests
         }
 
         throw new InvalidOperationException("Could not locate repository root.");
+    }
+
+    private static async Task RunProcessAsync(string workingDirectory, string cliAssemblyPath, params string[] arguments)
+    {
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            WorkingDirectory = workingDirectory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        }.WithArguments([cliAssemblyPath, .. arguments]));
+
+        Assert.NotNull(process);
+        var error = await process.StandardError.ReadToEndAsync(CancellationToken.None);
+        await process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        await process.WaitForExitAsync(CancellationToken.None);
+        Assert.Equal(0, process.ExitCode);
+        Assert.True(string.IsNullOrWhiteSpace(error), error);
     }
 }
 
